@@ -246,7 +246,7 @@ Matrix Matrix::inverse() {
 }
 
 double Matrix::det() {
-    if (rows() != cols()) return 0; // Детерминант определён только для квадратных матриц
+    if (rows() != cols()) return NAN; // Детерминант определён только для квадратных матриц
 
     size_t n = rows();
     Matrix temp(*this); // Создаём копию матрицы, чтобы не изменять оригинал
@@ -288,14 +288,25 @@ double Matrix::det() {
 }
 
 Matrix Matrix::identity(size_t rows, size_t cols) {
+    Matrix result(rows, cols);
+    result.setIdentity();
+    return result;
 }
 
 Matrix Matrix::zeros(size_t rows, size_t cols) {
+    Matrix result(rows, cols);
+    result.setZero();
+    return result;
 }
 
 Matrix Matrix::constants(size_t rows, size_t cols, double value) {
+    Matrix result(rows, cols);
+    result.setConstants(value);
+    return result;
 }
 
 Matrix operator*(double value, const Matrix &mat) {
-    return value *= mat;
+    Matrix result(mat);
+    result *= value;
+    return result;
 }
