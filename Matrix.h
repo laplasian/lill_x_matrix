@@ -11,12 +11,12 @@ public:
 
     Matrix(const Matrix& mat);
 
-    Matrix operator*(const Matrix& mat);
-    Matrix operator-(const Matrix& mat);
-    Matrix operator+(const Matrix& mat);
+    Matrix operator*(const Matrix& mat) const;
+    Matrix operator-(const Matrix& mat) const;
+    Matrix operator+(const Matrix& mat) const;
 
-    Matrix operator*(double value);
-    Matrix operator/(double value);
+    Matrix operator*(double value) const;
+    Matrix operator/(double value) const;
 
     Matrix& operator=(const Matrix& mat);
     Matrix& operator*=(const Matrix& mat);
@@ -58,10 +58,10 @@ public:
     friend Matrix operator*(double value, const Matrix& mat);
 
 private:
+    bool m_isValid{};
     size_t m_rows{};
     size_t m_cols{};
     double* m_data{};
-    bool m_isValid{};
 };
 
 #endif //MATRIX_H
