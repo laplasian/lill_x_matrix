@@ -26,7 +26,7 @@ public:
     Matrix& operator*=(double value);
     Matrix& operator/=(double value);
 
-    bool isValid();
+    bool isValid() const;
 
     void resize(size_t rows, size_t cols);
 
@@ -36,8 +36,9 @@ public:
     const double* data() const;
     double* data();
 
-    size_t rows();
-    size_t cols();
+    size_t rows() const;
+
+    size_t cols() const;
 
     Matrix& setIdentity();
     Matrix& setZero();
