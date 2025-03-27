@@ -124,6 +124,7 @@ Matrix & Matrix::operator+=(const Matrix &mat) {
     }
     const Matrix result = *this + mat;
     *this = result;
+    return *this;
 }
 
 Matrix & Matrix::operator-=(const Matrix &mat) {
@@ -141,6 +142,10 @@ Matrix & Matrix::operator*=(double value) {
 }
 
 Matrix & Matrix::operator/=(double value) {
+    if (value == 0) {
+        m_isValid = false;
+        return *this;
+    }
     *this *= (1 / value);
     return *this;
 }
