@@ -62,10 +62,10 @@ TEST(MatrixTest, Inverse) {
     Matrix a(2, 2, {4, 7, 2, 6});
     Matrix inv = a.inverse();
     Matrix identity = a * inv;
-    EXPECT_NEAR(identity(0, 0), 1.0, 1e-6);
-    EXPECT_NEAR(identity(0, 1), 0.0, 1e-6);
-    EXPECT_NEAR(identity(1, 0), 0.0, 1e-6);
-    EXPECT_NEAR(identity(1, 1), 1.0, 1e-6);
+    EXPECT_NEAR(identity(0, 0), 1.0, EPS);
+    EXPECT_NEAR(identity(0, 1), 0.0, EPS);
+    EXPECT_NEAR(identity(1, 0), 0.0, EPS);
+    EXPECT_NEAR(identity(1, 1), 1.0, EPS);
 }
 
 // Тест транспонирования

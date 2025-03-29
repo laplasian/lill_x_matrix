@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <vector>
 
-#define EPS 1e-9
+#define EPS 1e-6
 
 class Matrix final {
 public:

@@ -58,7 +58,7 @@ Matrix Matrix::operator*(const Matrix &mat) const {
         for (size_t j = 0; j < mat.m_cols; ++j) {
             double sum = 0;
             for (size_t k = 0; k < m_cols; ++k) {
-                sum += coeffRef(i, k) * coeffRef(k, j);
+                sum += coeffRef(i, k) * mat.coeffRef(k, j);
             }
             result.coeffRef(i, j) = sum;
         }
