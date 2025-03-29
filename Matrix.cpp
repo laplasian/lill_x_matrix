@@ -6,6 +6,18 @@
 
 // Constructors:
 
+static bool same_dimension(const Matrix &mat1, const Matrix &mat2) {
+    return mat1.rows() == mat2.rows() && mat1.cols() == mat2.cols();
+}
+
+static bool is_squared(const Matrix &mat) {
+    return mat.rows() == mat.cols();
+}
+
+static bool is_compatible(const Matrix &mat1, const Matrix &mat2) {
+    return mat1.cols() == mat2.rows();
+}
+
 Matrix::Matrix(){
 }
 
@@ -38,7 +50,7 @@ Matrix::~Matrix() {
 // Overloaded operators
 
 Matrix Matrix::operator*(const Matrix &mat) const {
-    if (m_cols != mat.m_rows || !isValid() || !mat.isValid()) {
+    if (!is_compatible(*this, mat) || !isValid() || !mat.isValid()) {
         return {};
     }
     Matrix result(m_rows, mat.m_cols);
@@ -51,7 +63,6 @@ Matrix Matrix::operator*(const Matrix &mat) const {
             result.coeffRef(i, j) = sum;
         }
     }
-
     return result;
 }
 
@@ -60,50 +71,50 @@ Matrix Matrix::operator-(const Matrix &mat) const {
 }
 
 Matrix Matrix::operator+(const Matrix &mat) const {
-    if (m_cols != mat.m_cols || m_rows != mat.m_rows || m_isValid == false || mat.m_isValid == false || m_data == nullptr || mat.m_data == nullptr) {
+    if (!same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
         return {};
     }
     Matrix result(m_rows, mat.m_cols);
-    for (size_t i = 0; i < m_rows; ++i) {
-        for (size_t j = 0; j < mat.m_cols; ++j) {
-            result.m_data[(i*m_cols + j)] = m_data[i*m_cols + j] + mat.m_data[i*m_cols + j];
-        }
+    for (size_t i = 0; i < m_rows*m_cols; ++i) {
+        result.m_data[i] = this->m_data[i] + mat.m_data[i];
     }
     return result;
 }
 
 Matrix Matrix::operator*(double value) const {
-    if (m_isValid == false || m_data == nullptr) {
-        return {};
-    }
-    Matrix result(m_rows, m_cols);
-    result.m_data = new double[m_rows * m_cols];
+    Matrix result(*this);
+
+    if (!result.isValid() || !isValid()) return {};
+
     for (size_t i = 0; i < m_rows * m_cols; ++i) {
         result.m_data[i] *= value;
     }
+
     return result;
 }
 
 Matrix Matrix::operator/(double value) const {
+    if (value <= EPS) {
+        throw std::runtime_error("division by zero");
+    }
     return *this * (1 / value);
 }
 
 Matrix & Matrix::operator=(const Matrix &mat) {
     m_rows = mat.m_rows;
     m_cols = mat.m_cols;
-    m_isValid = mat.m_isValid;
     if (mat.m_data != nullptr) {
-        delete m_data;
-        m_data = new double[m_rows*m_cols];
+        deallocate(m_data);
+        m_data = allocate(m_rows, m_cols);
         memcpy(m_data, mat.m_data, m_rows*m_cols * sizeof(double));
-    } else m_data = nullptr;
+    } else m_data = deallocate(m_data);
 
     return *this;
 }
 
 Matrix & Matrix::operator*=(const Matrix &mat) {
-    if (m_cols != mat.m_rows || m_isValid == false || mat.m_isValid == false || m_data == nullptr || mat.m_data == nullptr) {
-        m_isValid = false;
+    if (!is_compatible(*this, mat) || !isValid() || !mat.isValid()) {
+        m_data = deallocate(m_data);
         return *this;
     }
     *this = *this * mat;
@@ -111,8 +122,8 @@ Matrix & Matrix::operator*=(const Matrix &mat) {
 }
 
 Matrix & Matrix::operator+=(const Matrix &mat) {
-    if (m_cols != mat.m_cols || m_rows != mat.m_rows || m_isValid == false || mat.m_isValid == false || m_data == nullptr || mat.m_data == nullptr) {
-        m_isValid = false;
+    if (same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
+        m_data = deallocate(m_data);
         return *this;
     }
     const Matrix result = *this + mat;
@@ -126,17 +137,16 @@ Matrix & Matrix::operator-=(const Matrix &mat) {
 }
 
 Matrix & Matrix::operator*=(double value) {
-    if (m_isValid == false || m_data == nullptr) {
+    if (!isValid()) {
         return *this;
     }
-    const Matrix result = *this * value;
-    *this = result;
+    *this = *this * value;
     return *this;
 }
 
 Matrix & Matrix::operator/=(double value) {
-    if (value == 0) {
-        m_isValid = false;
+    if (value <= EPS) {
+        m_data = deallocate(m_data);
         return *this;
     }
     *this *= (1 / value);
@@ -146,7 +156,7 @@ Matrix & Matrix::operator/=(double value) {
 // Tools
 
 bool Matrix::isValid() const {
-    return m_isValid;
+    return m_data != nullptr && m_rows > 0 && m_cols > 0;
 }
 
 void Matrix::resize(size_t rows, size_t cols) {
@@ -157,18 +167,19 @@ void Matrix::resize(size_t rows, size_t cols) {
 const double & Matrix::coeffRef(size_t rowIdx, size_t colIdx) const {
     if (rowIdx >= m_rows || colIdx >= m_cols) {
         throw std::out_of_range("out of range");
-    } else if (m_isValid == false || m_data == nullptr) {
+    }
+    if (!isValid()) {
         throw std::out_of_range("invalid matrix data");
     }
     return m_data[rowIdx*m_cols + colIdx];
 }
 
-
 // rowIdx * m_cols + colIdx
 double & Matrix::coeffRef(size_t rowIdx, size_t colIdx) {
     if (rowIdx >= m_rows || colIdx >= m_cols) {
         throw std::out_of_range("out of range");
-    } else if (m_isValid == false || m_data == nullptr) {
+    }
+    if (!isValid()) {
         throw std::out_of_range("invalid matrix data");
     }
     return m_data[rowIdx*m_cols + colIdx];
@@ -183,7 +194,7 @@ const double & Matrix::operator()(size_t rowIdx, size_t colIdx) const {
 }
 
 bool Matrix::operator==(const Matrix &mat) const {
-    if (m_cols != mat.m_cols || m_rows != mat.m_rows || m_isValid == false || mat.m_isValid == false) {
+    if (!same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
         return false;
     }
     for (size_t i = 0; i < m_cols * m_rows; ++i) {
@@ -219,15 +230,12 @@ Matrix & Matrix::setZero() {
 }
 
 Matrix & Matrix::setConstants(double value) {
-    if (m_data == nullptr) {
+    if (!isValid()) {
         return *this;
     }
-    for (size_t i = 0; i < m_rows; ++i) {
-        for (size_t j = 0; j < m_cols; ++j) {
-            m_data[i*m_cols + j] = value;
-        }
+    for (size_t i = 0; i < m_rows*m_cols; ++i) {
+        m_data[i] = value;
     }
-    m_isValid = true;
     return *this;
 }
 
@@ -261,15 +269,17 @@ Matrix Matrix::transpose() const{
 
 Matrix Matrix::inverse() const{
     Matrix _new(m_rows, m_cols);
-    if (m_rows != m_cols || m_isValid == false || det() == 0 || m_data == nullptr) {
+    if (m_rows != m_cols || !isValid() || det() == 0) {
         return {};
     }
+
+    //
 
     return _new;
 }
 
 double Matrix::det() const{
-    if (m_rows != m_cols || m_isValid == false || m_data == nullptr) {
+    if (m_rows != m_cols || !isValid()) {
         return NAN;
     }
 
@@ -346,7 +356,10 @@ double * Matrix::allocate(size_t rows, size_t cols) {
     if (rows == 0 || cols == 0) {
         return nullptr;
     }
-    return new double[rows*cols];
+
+    double *data;
+    data = new double[rows * cols];
+    return data;
 }
 
 double * Matrix::deallocate(double *data) {

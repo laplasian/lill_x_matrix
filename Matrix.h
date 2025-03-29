@@ -75,7 +75,6 @@ private:
     double* m_data{};
 
     static double *allocate(size_t rows, size_t cols);
-
     static double * deallocate(double *data);
 };
 
