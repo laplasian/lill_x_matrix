@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "matrix.h"  // Подключаем заголовочный файл с реализацией класса Matrix
+#include "Matrix.hpp"  // Подключаем заголовочный файл с реализацией класса Matrix
 
 
 int main(int argc, char **argv) {

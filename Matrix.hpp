@@ -12,7 +12,6 @@ public:
     Matrix();
     Matrix(size_t cols);
     Matrix(size_t rows, size_t cols);
-    Matrix(int rows, int cols, const std::vector<double>& values); // Дополнение
     ~Matrix();
 
     Matrix(const Matrix& mat);
@@ -31,12 +30,6 @@ public:
 
     Matrix& operator*=(double value);
     Matrix& operator/=(double value);
-
-    double& operator()(size_t rowIdx, size_t colIdx); // Дополнение
-    const double& operator()(size_t rowIdx, size_t colIdx) const; // Дополнение
-   // const double& operator[](size_t rowIdx, size_t colIdx)  const; // Дополнение
-    bool operator==(const Matrix& mat) const; // Дополнение
-
 
     bool isValid() const;
 
@@ -74,8 +67,8 @@ private:
     size_t m_cols{};
     double* m_data{};
 
-    static double *allocate(size_t rows, size_t cols);
-    static double * deallocate(double *data);
+    void allocate(size_t rows, size_t cols);
+    void deallocate();
 };
 
 #endif //MATRIX_H
