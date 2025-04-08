@@ -14,62 +14,138 @@ bool operator==(const Matrix &a, const Matrix &b) {
     return true;
 }
 
-// Тест конструктора и базовых операций
-TEST(MatrixTest, ConstructorAndBasicOperations) {
-    Matrix m(2, 2);
-    EXPECT_EQ(m.rows(), 2);
-    EXPECT_EQ(m.cols(), 2);
 
-    m.coeffRef(0,0) = 1.0;
-    m.coeffRef(0, 1) = 2.0;
-    m.coeffRef(1, 0) = 3.0;
-    m.coeffRef(1, 1) = 4.0;
-    EXPECT_DOUBLE_EQ(m.coeffRef(0, 0), 1.0);
-    EXPECT_DOUBLE_EQ(m.coeffRef(0, 1), 2.0);
-    EXPECT_DOUBLE_EQ(m.coeffRef(1, 0), 3.0);
-    EXPECT_DOUBLE_EQ(m.coeffRef(1, 1), 4.0);
+// TEST CONSTRUCTORS
+
+TEST(MatrixTest, Constructors) {
+    Matrix m1(2, 2);
+    EXPECT_EQ(m1.rows(), 2);
+    EXPECT_EQ(m1.cols(), 2);
+    set(m1, {1,2,3,4});
+    // m1.coeffRef(0,0) = 1.0;
+    // m1.coeffRef(0, 1) = 2.0;
+    // m1.coeffRef(1, 0) = 3.0;
+    // m1.coeffRef(1, 1) = 4.0;
+    // EXPECT_DOUBLE_EQ(m1.coeffRef(0, 0), 1.0);
+    // EXPECT_DOUBLE_EQ(m1.coeffRef(0, 1), 2.0);
+    // EXPECT_DOUBLE_EQ(m1.coeffRef(1, 0), 3.0);
+    // EXPECT_DOUBLE_EQ(m1.coeffRef(1, 1), 4.0);
+
+    Matrix m2(2);
+    EXPECT_EQ(m2.rows(), 1);
+    EXPECT_EQ(m2.cols(), 2);
+
+    Matrix m3(m1);
+    EXPECT_EQ(m3.rows(), m1.rows());
+    EXPECT_EQ(m3.cols(), m1.cols());
+    EXPECT_EQ(m1, m3);
 }
 
-// Тест конструктора копирования
-TEST(MatrixTest, CopyConstructor) {
-    Matrix a(2, 2);
-    set(a, {1,2,3,4});
-    Matrix b(a);
-    EXPECT_EQ(a, b);
+// TEST BaseOperations
+
+TEST(MatrixTest, BaseOperations) {
+    Matrix m1(2, 2);
+    Matrix m2(2, 2);
+    Matrix m3(2, 2);
+    Matrix m4(2, 2);
+    set(m1, {1,0,1,0});
+    set(m2, {1,0,1,0});
+    set(m3, {0,0,0,0});
+    set(m4, {2,0,2,0});
+
+    EXPECT_EQ(m1 * m2, m1);
+    EXPECT_EQ(m1 - m2, m3);
+    EXPECT_EQ(m1 + m2, m4);
+    EXPECT_EQ(m1 * 2, m4);
+    EXPECT_EQ(m4 / 2, m1);
 }
 
-// Тест оператора присваивания
-TEST(MatrixTest, AssignmentOperator) {
-    Matrix a(2, 2);
-    set(a, {1,2,3,4});
-    Matrix b = a;
-    EXPECT_EQ(a, b);
+// TEST Операции с присваиванием
+
+TEST(MatrixTest, ReturnOperations) {
+    Matrix m1(2, 2);
+    Matrix m2(2, 2);
+    Matrix m3(2, 2);
+    Matrix m4(2, 2);
+    set(m1, {1,0,1,0});
+    set(m2, {1,0,1,0});
+    set(m3, {0,0,0,0});
+    set(m4, {2,0,2,0});
+
+    Matrix result(2,2);
+
+    result = m1;
+    EXPECT_EQ(result, m1);
+    result += m2;
+    EXPECT_EQ(result, m4);
+    result -= m3;
+    EXPECT_EQ(result, m4);
+    result *= m1;
+    EXPECT_EQ(result, m4);
+    result /= 2;
+    EXPECT_EQ(result, m1);
+    result *= 2;
+    EXPECT_EQ(result, m4);
 }
 
-// Тест операции сложения
-TEST(MatrixTest, Addition) {
-    Matrix a(2, 2);
-    set(a, {1, 2, 3, 4});
-    Matrix b(2, 2);
-    set(b, {4, 3, 2, 1});
-    Matrix c = a + b;
-    EXPECT_DOUBLE_EQ(c.coeffRef(0, 0), 5.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(0, 1), 5.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(1, 0), 5.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(1, 1), 5.0);
+// TEST TOOLS
+
+TEST(MatrixTest, TOOLS) {
+    Matrix m1(2, 2);
+    EXPECT_EQ(m1.rows(), 2);
+    EXPECT_EQ(m1.cols(), 2);
+    set(m1, {1,2,3,4});
+    m1.coeffRef(0,0) = 1.0;
+    m1.coeffRef(0, 1) = 2.0;
+    m1.coeffRef(1, 0) = 3.0;
+    m1.coeffRef(1, 1) = 4.0;
+    EXPECT_DOUBLE_EQ(m1.coeffRef(0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(m1.coeffRef(0, 1), 2.0);
+    EXPECT_DOUBLE_EQ(m1.coeffRef(1, 0), 3.0);
+    EXPECT_DOUBLE_EQ(m1.coeffRef(1, 1), 4.0);
+
+    std::vector<double> scr = {1, 2, 3, 4};
+    Matrix m2(2,2);
+    set(m2, scr);
+    EXPECT_EQ(scr.data(), m2.data());
+
+    m1.resize(3,3);
+    EXPECT_EQ(m1.rows(), 3);
+    EXPECT_EQ(m1.cols(), 3);
 }
 
-// Тест операции умножения
-TEST(MatrixTest, Multiplication) {
-    Matrix a(2, 2);
-    set(a, {1, 2, 3, 4});
-    Matrix b(2, 2);
-    set(b, {2, 0, 1, 2});
-    Matrix c = a * b;
-    EXPECT_DOUBLE_EQ(c.coeffRef(0, 0), 4.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(0, 1), 4.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(1, 0), 10.0);
-    EXPECT_DOUBLE_EQ(c.coeffRef(1, 1), 8.0);
+// TEST SET FUNCTIONS
+
+TEST(MatrixTest, SetFunctions) {
+    Matrix m1(2, 2);
+    Matrix m2(2, 2);
+
+    m1.setIdentity();
+    set(m2, {1,0,1,0});
+    EXPECT_EQ(m1, m2);
+
+    m1.setZero();
+    set(m2, {0,0,0,0});
+    EXPECT_EQ(m1,m2);
+
+    m1.setConstants(2);
+    set(m2, {2,2,2,2});
+    EXPECT_EQ(m1, m2);
+
+    m1.setIdentity(3, 3);
+    m2.resize(3,3);
+    set(m2, {1,0,1,0});
+    EXPECT_EQ(m1, m2);
+
+    m1.setZero(4,4);
+    m2.resize(4,4);
+    set(m2, {0,0,0,0});
+    EXPECT_EQ(m1,m2);
+
+    m1.setConstants(5, 5, 2);
+    m2.resize(5,5);
+    set(m2, {2,2,2,2});
+    EXPECT_EQ(m1, m2);
 }
 
 // Тест операции инверсии матрицы
@@ -104,4 +180,15 @@ TEST(MatrixTest, Determinant) {
     Matrix a(2, 2);
     set(a,{4, 3, 3, 2});
     EXPECT_DOUBLE_EQ(a.det(), -1.0);
+}
+
+// TEST Invalids
+
+TEST(MatrixTest, INVALIDS) {
+    Matrix a(2, 2);
+    Matrix b(3, 3);
+    Matrix c(3, 3);
+
+    c = a*b;
+    EXPECT_DOUBLE_EQ(c.isValid(), false);
 }

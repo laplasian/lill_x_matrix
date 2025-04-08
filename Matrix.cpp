@@ -5,8 +5,6 @@
 #include <stdexcept>
 
 
-
-// сделать приватными
 static bool same_dimension(const Matrix &mat1, const Matrix &mat2) {
     return mat1.rows() == mat2.rows() && mat1.cols() == mat2.cols();
 }
