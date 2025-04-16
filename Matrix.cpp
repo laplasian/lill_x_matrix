@@ -1,31 +1,18 @@
 #include "Matrix.hpp"
 
+#include <cassert>
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
 
-
-static bool same_dimension(const Matrix &mat1, const Matrix &mat2) {
-    return mat1.rows() == mat2.rows() && mat1.cols() == mat2.cols();
-}
-
-static bool is_squared(const Matrix &mat) {
-    return mat.rows() == mat.cols();
-}
-
-static bool is_compatible(const Matrix &mat1, const Matrix &mat2) {
-    return mat1.cols() == mat2.rows();
-}
-//
-
 static Matrix diagonal(const Matrix &mat, int* sign) {
-    if (!is_squared(mat) || !mat.isValid()) {
+    if (!mat.is_squared() || !mat.isValid()) {
         return {};
     }
 
     Matrix diag = mat;
 
-    *sign = -1;
+    *sign = 1;
     for (int i = 0; i < diag.rows(); i++) {
         // Поиск главного элемента в столбце
         int maxRow = i;
@@ -83,17 +70,25 @@ Matrix::~Matrix() {
 // Overloaded operators
 
 Matrix Matrix::operator*(const Matrix &mat) const {
-    if (!is_compatible(*this, mat) || !isValid() || !mat.isValid()) {
+    if (!is_compatible(mat) || !isValid() || !mat.isValid()) {
         return {};
     }
-    Matrix result(*this);
-    result *= mat;
+    Matrix result(rows(), mat.cols());
+    for (size_t i = 0; i < m_rows; ++i) {
+        for (size_t j = 0; j < mat.m_cols; ++j) {
+            double sum = 0;
+            for (size_t k = 0; k < m_cols; ++k) {
+                sum += coeffRef(i, k) * mat.coeffRef(k, j);
+            }
+            result.coeffRef(i, j) = sum;
+        }
+    }
 
     return result;
 }
 
 Matrix Matrix::operator-(const Matrix &mat) const {
-    if (!same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
+    if (!same_dimension(mat) || !isValid() || !mat.isValid()) {
         return {};
     }
     Matrix result(*this);
@@ -102,7 +97,7 @@ Matrix Matrix::operator-(const Matrix &mat) const {
 }
 
 Matrix Matrix::operator+(const Matrix &mat) const {
-    if (!same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
+    if (!same_dimension(mat) || !isValid() || !mat.isValid()) {
         return {};
     }
     Matrix result(*this);
@@ -111,13 +106,10 @@ Matrix Matrix::operator+(const Matrix &mat) const {
 }
 
 Matrix Matrix::operator*(double value) const {
+    if (!isValid()) return {};
+
     Matrix result(*this);
-
-    if (!result.isValid() || !isValid()) return {};
-
-    for (size_t i = 0; i < m_rows * m_cols; ++i) {
-        result.m_data[i] *= value;
-    }
+    result *= value;
 
     return result;
 }
@@ -126,39 +118,40 @@ Matrix Matrix::operator/(double value) const {
     if (value <= EPS) {
         throw std::runtime_error("division by zero");
     }
-    return *this * (1 / value);
+    if (!isValid()) return {};
+
+    Matrix result(*this);
+    result /= value;
+
+    return result;
 }
 
 Matrix & Matrix::operator=(const Matrix &mat) {
+    if (this ==  &mat) {
+        return *this;
+    }
     if (mat.isValid()) {
         deallocate();
-        allocate(m_rows, m_cols);
+        allocate(mat.m_rows, mat.m_cols);
         memcpy(m_data, mat.m_data, m_rows*m_cols * sizeof(double));
     } else deallocate();
-
     return *this;
 }
 
-Matrix & Matrix::operator*=(const Matrix &mat) { // наоборот реализовать через *
-    if (!is_compatible(*this, mat) || !isValid() || !mat.isValid()) {
+Matrix & Matrix::operator*=(const Matrix &mat) {
+    if (!is_compatible(mat) || !isValid() || !mat.isValid()) {
         deallocate();
         return *this;
     }
 
-    for (size_t i = 0; i < m_rows; ++i) {
-        for (size_t j = 0; j < mat.m_cols; ++j) {
-            double sum = 0;
-            for (size_t k = 0; k < m_cols; ++k) {
-                sum += coeffRef(i, k) * mat.coeffRef(k, j);
-            }
-            coeffRef(i, j) = sum;
-        }
-    }
+    Matrix result = *this * mat;
+    *this = result;
+
     return *this;
 }
 
 Matrix & Matrix::operator+=(const Matrix &mat) {
-    if (same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
+    if (!isValid() || !mat.isValid() || !same_dimension(mat)) {
         deallocate();
         return *this;
     }
@@ -169,7 +162,7 @@ Matrix & Matrix::operator+=(const Matrix &mat) {
 }
 
 Matrix & Matrix::operator-=(const Matrix &mat) {
-    if (same_dimension(*this, mat) || !isValid() || !mat.isValid()) {
+    if (!same_dimension(mat) || !isValid() || !mat.isValid()) {
         deallocate();
         return *this;
     }
@@ -183,16 +176,24 @@ Matrix & Matrix::operator*=(const double value) {
     if (!isValid()) {
         return *this;
     }
-    *this = *this * value;
+    for (size_t i = 0; i < m_rows * m_cols; ++i) {
+        m_data[i] *= value;
+    }
     return *this;
 }
 
 Matrix & Matrix::operator/=(const double value) {
-    if (value <= EPS) {
+    if (!isValid()) {
+        return *this;
+    }
+    if (std::abs(value) <= EPS) {
         deallocate();
         return *this;
     }
-    *this *= (1 / value);
+    assert(m_data != nullptr);
+    for (size_t i = 0; i < m_rows * m_cols; ++i) {
+        m_data[i] /= value;
+    }
     return *this;
 }
 
@@ -298,7 +299,7 @@ Matrix Matrix::transpose() const{
 }
 
 Matrix Matrix::inverse() const{
-    if (!is_squared(*this) || !isValid() || fabs(det()) < EPS) {
+    if (!is_squared() || !isValid() || fabs(det()) < EPS) {
         return {};
     }
 
@@ -349,7 +350,7 @@ Matrix Matrix::inverse() const{
 }
 
 double Matrix::det() const{
-    if (!is_squared(*this) || !isValid()) {
+    if (!is_squared() || !isValid()) {
         return NAN;
     }
 
@@ -363,7 +364,7 @@ double Matrix::det() const{
     for (int i = 0; i < diag.rows(); i++)
         det *= diag.coeffRef(i,i);
 
-    return det * sign;
+    return det;
 }
 
 Matrix Matrix::identity(size_t rows, size_t cols) {
@@ -390,6 +391,18 @@ Matrix operator*(double value, const Matrix &mat) {
     return result;
 }
 
+bool Matrix::same_dimension(const Matrix &mat) const {
+    return rows() == mat.rows() && cols() == mat.cols();
+}
+
+bool Matrix::is_squared() const {
+    return rows() == cols();
+}
+
+bool Matrix::is_compatible(const Matrix &mat) const {
+    return cols() == mat.rows();
+}
+
 void Matrix::allocate(size_t rows, size_t cols) {
     if (rows == 0 || cols == 0) {
         return;
@@ -403,4 +416,5 @@ void Matrix::deallocate() {
     m_cols = 0;
     m_rows = 0;
     delete[] m_data;
+    m_data = nullptr;
 }

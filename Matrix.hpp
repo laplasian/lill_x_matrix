@@ -10,7 +10,8 @@ class Matrix final {
 public:
     // Constructors
     Matrix();
-    Matrix(size_t cols);
+
+    explicit Matrix(size_t cols);
     Matrix(size_t rows, size_t cols);
     ~Matrix();
 
@@ -61,6 +62,10 @@ public:
     static Matrix constants(size_t rows, size_t cols, double value);
 
     friend Matrix operator*(double value, const Matrix& mat);
+
+    bool same_dimension(const Matrix &mat) const;
+    bool is_squared() const;
+    bool is_compatible(const Matrix &mat) const;
 
 private:
     size_t m_rows{};

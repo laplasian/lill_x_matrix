@@ -1,10 +1,25 @@
+#include <cmath>
 #include <gtest/gtest.h>
 #include "Matrix.hpp"
 
-void set(Matrix& mat, std::vector<double> v) {
-    if (v.size() != mat.cols()*mat.rows()) return;
-    memcpy(mat.data(), v.data(), sizeof(double)*mat.cols()*mat.rows());
-};
+Matrix construct(std::vector<std::vector<double>> data) {
+    size_t raws = data.size();
+    size_t cols = data[0].size();
+    for (const auto & i : data) {
+        if (i.size() != cols) {
+            throw std::out_of_range("invalid matrix data");
+        }
+    }
+    Matrix mat(raws, cols);
+
+    for (int i = 0; i < raws; i++) {
+        for (int j = 0; j < cols; j++) {
+            mat.coeffRef(i, j) = data[i][j];
+        }
+    }
+
+    return mat;
+}
 
 bool operator==(const Matrix &a, const Matrix &b) {
     if (!a.isValid() || !b.isValid() || a.cols()!= b.cols() || a.rows() != b.rows()) return false;
@@ -14,181 +29,199 @@ bool operator==(const Matrix &a, const Matrix &b) {
     return true;
 }
 
-
-// TEST CONSTRUCTORS
-
-TEST(MatrixTest, Constructors) {
-    Matrix m1(2, 2);
-    EXPECT_EQ(m1.rows(), 2);
-    EXPECT_EQ(m1.cols(), 2);
-    set(m1, {1,2,3,4});
-    // m1.coeffRef(0,0) = 1.0;
-    // m1.coeffRef(0, 1) = 2.0;
-    // m1.coeffRef(1, 0) = 3.0;
-    // m1.coeffRef(1, 1) = 4.0;
-    // EXPECT_DOUBLE_EQ(m1.coeffRef(0, 0), 1.0);
-    // EXPECT_DOUBLE_EQ(m1.coeffRef(0, 1), 2.0);
-    // EXPECT_DOUBLE_EQ(m1.coeffRef(1, 0), 3.0);
-    // EXPECT_DOUBLE_EQ(m1.coeffRef(1, 1), 4.0);
-
-    Matrix m2(2);
-    EXPECT_EQ(m2.rows(), 1);
-    EXPECT_EQ(m2.cols(), 2);
-
-    Matrix m3(m1);
-    EXPECT_EQ(m3.rows(), m1.rows());
-    EXPECT_EQ(m3.cols(), m1.cols());
-    EXPECT_EQ(m1, m3);
+// === Constructors ===
+TEST(MatrixTest, DefaultConstructor) {
+    Matrix m;
+    EXPECT_FALSE(m.isValid());
 }
 
-// TEST BaseOperations
-
-TEST(MatrixTest, BaseOperations) {
-    Matrix m1(2, 2);
-    Matrix m2(2, 2);
-    Matrix m3(2, 2);
-    Matrix m4(2, 2);
-    set(m1, {1,0,1,0});
-    set(m2, {1,0,1,0});
-    set(m3, {0,0,0,0});
-    set(m4, {2,0,2,0});
-
-    EXPECT_EQ(m1 * m2, m1);
-    EXPECT_EQ(m1 - m2, m3);
-    EXPECT_EQ(m1 + m2, m4);
-    EXPECT_EQ(m1 * 2, m4);
-    EXPECT_EQ(m4 / 2, m1);
+TEST(MatrixTest, ConstructorWithRowsCols) {
+    Matrix m(2, 3);
+    EXPECT_EQ(m.rows(), 2);
+    EXPECT_EQ(m.cols(), 3);
+    EXPECT_TRUE(m.isValid());
 }
 
-// TEST Операции с присваиванием
-
-TEST(MatrixTest, ReturnOperations) {
-    Matrix m1(2, 2);
-    Matrix m2(2, 2);
-    Matrix m3(2, 2);
-    Matrix m4(2, 2);
-    set(m1, {1,0,1,0});
-    set(m2, {1,0,1,0});
-    set(m3, {0,0,0,0});
-    set(m4, {2,0,2,0});
-
-    Matrix result(2,2);
-
-    result = m1;
-    EXPECT_EQ(result, m1);
-    result += m2;
-    EXPECT_EQ(result, m4);
-    result -= m3;
-    EXPECT_EQ(result, m4);
-    result *= m1;
-    EXPECT_EQ(result, m4);
-    result /= 2;
-    EXPECT_EQ(result, m1);
-    result *= 2;
-    EXPECT_EQ(result, m4);
-}
-
-// TEST TOOLS
-
-TEST(MatrixTest, TOOLS) {
-    Matrix m1(2, 2);
-    EXPECT_EQ(m1.rows(), 2);
-    EXPECT_EQ(m1.cols(), 2);
-    set(m1, {1,2,3,4});
-    m1.coeffRef(0,0) = 1.0;
-    m1.coeffRef(0, 1) = 2.0;
-    m1.coeffRef(1, 0) = 3.0;
-    m1.coeffRef(1, 1) = 4.0;
-    EXPECT_DOUBLE_EQ(m1.coeffRef(0, 0), 1.0);
-    EXPECT_DOUBLE_EQ(m1.coeffRef(0, 1), 2.0);
-    EXPECT_DOUBLE_EQ(m1.coeffRef(1, 0), 3.0);
-    EXPECT_DOUBLE_EQ(m1.coeffRef(1, 1), 4.0);
-
-    std::vector<double> scr = {1, 2, 3, 4};
-    Matrix m2(2,2);
-    set(m2, scr);
-    EXPECT_EQ(scr.data(), m2.data());
-
-    m1.resize(3,3);
-    EXPECT_EQ(m1.rows(), 3);
-    EXPECT_EQ(m1.cols(), 3);
-}
-
-// TEST SET FUNCTIONS
-
-TEST(MatrixTest, SetFunctions) {
-    Matrix m1(2, 2);
-    Matrix m2(2, 2);
-
-    m1.setIdentity();
-    set(m2, {1,0,1,0});
-    EXPECT_EQ(m1, m2);
-
-    m1.setZero();
-    set(m2, {0,0,0,0});
-    EXPECT_EQ(m1,m2);
-
-    m1.setConstants(2);
-    set(m2, {2,2,2,2});
-    EXPECT_EQ(m1, m2);
-
-    m1.setIdentity(3, 3);
-    m2.resize(3,3);
-    set(m2, {1,0,1,0});
-    EXPECT_EQ(m1, m2);
-
-    m1.setZero(4,4);
-    m2.resize(4,4);
-    set(m2, {0,0,0,0});
-    EXPECT_EQ(m1,m2);
-
-    m1.setConstants(5, 5, 2);
-    m2.resize(5,5);
-    set(m2, {2,2,2,2});
+TEST(MatrixTest, CopyConstructorValid) {
+    auto m1 = construct({{1, 2}, {3, 4}});
+    Matrix m2(m1);
+    EXPECT_TRUE(m2.isValid());
     EXPECT_EQ(m1, m2);
 }
 
-// Тест операции инверсии матрицы
-TEST(MatrixTest, Inverse) {
-    Matrix a(2, 2);
-    set(a, {4, 7, 2, 6});
-    Matrix inv = a.inverse();
-    Matrix identity = a * inv;
-    EXPECT_NEAR(identity.coeffRef(0, 0), 1.0, EPS);
-    EXPECT_NEAR(identity.coeffRef(0, 1), 0.0, EPS);
-    EXPECT_NEAR(identity.coeffRef(1, 0), 0.0, EPS);
-    EXPECT_NEAR(identity.coeffRef(1, 1), 1.0, EPS);
+TEST(MatrixTest, AssignmentOperator) {
+    auto m1 = construct({{1, 2}, {3, 4}});
+    Matrix m2;
+    m2 = m1;
+    EXPECT_EQ(m1, m2);
 }
 
-// Тест транспонирования
+// === Operators ===
+TEST(MatrixTest, OperatorAdditionValid) {
+    auto a = construct({{1, 2}, {3, 4}});
+    auto b = construct({{5, 6}, {7, 8}});
+    auto c = a + b;
+    EXPECT_EQ(c, construct({{6, 8}, {10, 12}}));
+}
+
+TEST(MatrixTest, OperatorAdditionInvalid) {
+    auto a = construct({{1, 2}, {3, 4}});
+    auto b = construct({{1, 2}});
+    auto c = a + b;
+    EXPECT_FALSE(c.isValid());
+}
+
+TEST(MatrixTest, OperatorSubtractionValid) {
+    auto a = construct({{5, 6}, {7, 8}});
+    auto b = construct({{1, 2}, {3, 4}});
+    auto c = a - b;
+    EXPECT_EQ(c, construct({{4, 4}, {4, 4}}));
+}
+
+TEST(MatrixTest, OperatorMultiplicationValid) {
+    auto a = construct({{1, 2}, {3, 4}});
+    auto b = construct({{2, 0}, {1, 2}});
+    auto c = a * b;
+    EXPECT_EQ(c, construct({{4, 4}, {10, 8}}));
+}
+
+TEST(MatrixTest, OperatorScalarMultiplication) {
+    auto a = construct({{1, 2}, {3, 4}});
+    auto c = a * 2.0;
+    EXPECT_EQ(c, construct({{2, 4}, {6, 8}}));
+}
+
+TEST(MatrixTest, OperatorScalarDivisionValid) {
+    auto a = construct({{2, 4}, {6, 8}});
+    auto c = a / 2.0;
+    EXPECT_EQ(c, construct({{1, 2}, {3, 4}}));
+}
+
+TEST(MatrixTest, OperatorScalarDivisionByZero) {
+    auto a = construct({{2, 4}, {6, 8}});
+    EXPECT_THROW(a / 0.0, std::runtime_error);
+}
+
+TEST(MatrixTest, OperatorMulAssignValid) {
+    auto a = construct({{1, 2}, {3, 4}});
+    auto b = construct({{2, 0}, {1, 2}});
+    a *= b;
+    EXPECT_EQ(a, construct({{4, 4}, {10, 8}}));
+}
+
+TEST(MatrixTest, OperatorAddAssignValid) {
+    auto a = construct({{1, 1}, {1, 1}});
+    auto b = construct({{2, 2}, {2, 2}});
+    a += b;
+    EXPECT_EQ(a, construct({{3, 3}, {3, 3}}));
+}
+
+TEST(MatrixTest, OperatorSubAssignValid) {
+    auto a = construct({{3, 3}, {3, 3}});
+    auto b = construct({{1, 1}, {1, 1}});
+    a -= b;
+    EXPECT_EQ(a, construct({{2, 2}, {2, 2}}));
+}
+
+TEST(MatrixTest, OperatorMulAssignScalar) {
+    auto a = construct({{1, 2}, {3, 4}});
+    a *= 3.0;
+    EXPECT_EQ(a, construct({{3, 6}, {9, 12}}));
+}
+
+TEST(MatrixTest, OperatorDivAssignScalarValid) {
+    auto a = construct({{4, 6}, {8, 10}});
+    a /= 2.0;
+    EXPECT_EQ(a, construct({{2, 3}, {4, 5}}));
+}
+
+// === Transpose ===
 TEST(MatrixTest, Transpose) {
-    Matrix a(2, 3);
-    set(a, {1, 2, 3, 4, 5, 6});
-    Matrix at = a.transpose();
-    EXPECT_EQ(at.rows(), 3);
-    EXPECT_EQ(at.cols(), 2);
-    EXPECT_DOUBLE_EQ(at.coeffRef(0, 0), 1.0);
-    EXPECT_DOUBLE_EQ(at.coeffRef(1, 0), 2.0);
-    EXPECT_DOUBLE_EQ(at.coeffRef(2, 0), 3.0);
-    EXPECT_DOUBLE_EQ(at.coeffRef(0, 1), 4.0);
-    EXPECT_DOUBLE_EQ(at.coeffRef(1, 1), 5.0);
-    EXPECT_DOUBLE_EQ(at.coeffRef(2, 1), 6.0);
+    auto a = construct({{1, 2, 3}, {4, 5, 6}});
+    auto t = a.transpose();
+    EXPECT_EQ(t, construct({{1, 4}, {2, 5}, {3, 6}}));
 }
 
-// Тест вычисления детерминанта
-TEST(MatrixTest, Determinant) {
-    Matrix a(2, 2);
-    set(a,{4, 3, 3, 2});
-    EXPECT_DOUBLE_EQ(a.det(), -1.0);
+// === Determinant ===
+TEST(MatrixTest, Determinant2x2) {
+    auto a = construct({{1, 2}, {3, 4}});
+    EXPECT_NEAR(a.det(), -2.0, 1e-6);
 }
 
-// TEST Invalids
+TEST(MatrixTest, DeterminantNonSquare) {
+    auto a = construct({{1, 2, 3}, {4, 5, 6}});
+    EXPECT_TRUE(std::isnan(a.det()));
+}
 
-TEST(MatrixTest, INVALIDS) {
+// === Inverse ===
+TEST(MatrixTest, Inverse2x2) {
+    auto a = construct({{4, 7}, {2, 6}});
+    auto inv = a.inverse();
+    auto identity = a * inv;
+    for (int i = 0; i < identity.rows(); i++) {
+        for (int j = 0; j < identity.cols(); j++) {
+            if (i == j) EXPECT_NEAR(identity.coeffRef(i, j), 1.0, 1e-6);
+            else EXPECT_NEAR(identity.coeffRef(i, j), 0.0, 1e-6);
+        }
+    }
+}
+
+TEST(MatrixTest, InverseSingular) {
+    auto a = construct({{1, 2}, {2, 4}});
+    auto inv = a.inverse();
+    EXPECT_FALSE(inv.isValid());
+}
+
+// === Set Identity/Zero/Constants ===
+TEST(MatrixTest, SetIdentity) {
+    Matrix a(3, 3);
+    a.setIdentity();
+    EXPECT_EQ(a, construct({{1,0,0},{0,1,0},{0,0,1}}));
+}
+
+TEST(MatrixTest, SetZero) {
     Matrix a(2, 2);
-    Matrix b(3, 3);
-    Matrix c(3, 3);
+    a.setZero();
+    EXPECT_EQ(a, construct({{0, 0}, {0, 0}}));
+}
 
-    c = a*b;
-    EXPECT_DOUBLE_EQ(c.isValid(), false);
+TEST(MatrixTest, SetConstants) {
+    Matrix a(2, 2);
+    a.setConstants(3.14);
+    EXPECT_EQ(a, construct({{3.14, 3.14}, {3.14, 3.14}}));
+}
+
+// === Resize ===
+TEST(MatrixTest, ResizeValid) {
+    Matrix a(2, 2);
+    a.resize(3, 3);
+    EXPECT_EQ(a.rows(), 3);
+    EXPECT_EQ(a.cols(), 3);
+}
+
+// === Exceptions ===
+TEST(MatrixTest, CoeffRefOutOfBounds) {
+    Matrix a(2, 2);
+    EXPECT_THROW(a.coeffRef(5, 5), std::out_of_range);
+}
+
+TEST(MatrixTest, InvalidMatrixCoeffRef) {
+    Matrix a;
+    EXPECT_THROW(a.coeffRef(0, 0), std::out_of_range);
+}
+
+// === Static Constructors ===
+TEST(MatrixTest, StaticIdentity) {
+    auto id = Matrix::identity(2, 2);
+    EXPECT_EQ(id, construct({{1, 0}, {0, 1}}));
+}
+
+TEST(MatrixTest, StaticZeros) {
+    auto z = Matrix::zeros(2, 2);
+    EXPECT_EQ(z, construct({{0, 0}, {0, 0}}));
+}
+
+TEST(MatrixTest, StaticConstants) {
+    auto c = Matrix::constants(2, 2, 42.0);
+    EXPECT_EQ(c, construct({{42.0, 42.0}, {42.0, 42.0}}));
 }
