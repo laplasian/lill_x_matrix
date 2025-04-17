@@ -62,15 +62,16 @@ public:
     static Matrix constants(size_t rows, size_t cols, double value);
 
     friend Matrix operator*(double value, const Matrix& mat);
+private:
+    size_t m_rows{};
+    size_t m_cols{};
+    double* m_data{};
 
     bool same_dimension(const Matrix &mat) const;
     bool is_squared() const;
     bool is_compatible(const Matrix &mat) const;
 
-private:
-    size_t m_rows{};
-    size_t m_cols{};
-    double* m_data{};
+    static Matrix diagonal(const Matrix &mat, int* sign);
 
     void allocate(size_t rows, size_t cols);
     void deallocate();

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdexcept>
 
-static Matrix diagonal(const Matrix &mat, int* sign) {
+Matrix Matrix::diagonal(const Matrix &mat, int* sign) {
     if (!mat.is_squared() || !mat.isValid()) {
         return {};
     }
