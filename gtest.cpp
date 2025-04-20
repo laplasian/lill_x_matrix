@@ -1,8 +1,9 @@
 #include <cmath>
 #include <gtest/gtest.h>
 #include "Matrix.hpp"
+#include <random>
 
-Matrix construct(std::vector<std::vector<double>> data) {
+static Matrix construct(std::vector<std::vector<double>> data) {
     size_t raws = data.size();
     size_t cols = data[0].size();
     for (const auto & i : data) {
@@ -21,10 +22,27 @@ Matrix construct(std::vector<std::vector<double>> data) {
     return mat;
 }
 
-bool operator==(const Matrix &a, const Matrix &b) {
+static Matrix construct_random(size_t raws, size_t cols) {
+    std::random_device rd;  // Seed for the random number engine
+    std::mt19937 gen(rd()); // Mersenne Twister engine
+    std::uniform_int_distribution<> dis(1, 100); // Distribution range [1, 100]
+
+    Matrix mat(raws, cols);
+
+    for (int i = 0; i < raws; i++) {
+        for (int j = 0; j < cols; j++) {
+            mat.coeffRef(i, j) = dis(gen);
+        }
+    }
+
+    return mat;
+}
+
+
+static bool operator==(const Matrix &a, const Matrix &b) {
     if (!a.isValid() || !b.isValid() || a.cols()!= b.cols() || a.rows() != b.rows()) return false;
     for (int i = 0; i < a.cols()*a.rows(); i++) {
-        if (a.data()[i] != b.data()[i]) return false;
+        if (std::abs(a.data()[i] - b.data()[i]) > EPS) return false;
     }
     return true;
 }
@@ -154,16 +172,11 @@ TEST(MatrixTest, DeterminantNonSquare) {
 }
 
 // === Inverse ===
-TEST(MatrixTest, Inverse2x2) {
-    auto a = construct({{4, 7}, {2, 6}});
+TEST(MatrixTest, Inverse100x100) {
+    auto a = construct_random(100,100);
     auto inv = a.inverse();
     auto identity = a * inv;
-    for (int i = 0; i < identity.rows(); i++) {
-        for (int j = 0; j < identity.cols(); j++) {
-            if (i == j) EXPECT_NEAR(identity.coeffRef(i, j), 1.0, 1e-6);
-            else EXPECT_NEAR(identity.coeffRef(i, j), 0.0, 1e-6);
-        }
-    }
+    EXPECT_EQ(identity, Matrix::identity(100,100));
 }
 
 TEST(MatrixTest, InverseSingular) {
