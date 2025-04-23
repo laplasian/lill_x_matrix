@@ -3,7 +3,7 @@
 #include "Matrix.hpp"
 #include <random>
 
-static Matrix construct(std::vector<std::vector<double>> data) {
+static Matrix construct(const std::vector<std::vector<double>>& data) {
     size_t raws = data.size();
     size_t cols = data[0].size();
     for (const auto & i : data) {
